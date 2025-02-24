@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <title>Hermes</title>
+    <style>
+        body {
+            margin: 0;
+            background-color: #2c3e50;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .content {
+            background-color: #ecf0f1;
+            width: 70%;
+            margin: 50px auto;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        #form {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        #form label {
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        input, textarea {
+            width: 100%;
+            font-family: 'Poppins', sans-serif;
+            background-color: #f7f7f7;
+            border: 1px solid #ccc;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 8px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+        }
+
+        input:focus, textarea:focus {
+            border-color: #3498db;
+            outline: none;
+        }
+
+        button {
+            background-color: #3498db;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin: 5px;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        .file{
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            align-items: center;
+            margin: 10px 0;
+        }
+
+        .file input {
+            width: 60%;
+        }
+
+        .file p {
+            margin: 2px 10px;
+            padding: 0;
+            color: #333;
+        }
+
+        .optional {
+            margin-top: 10px;
+        }
+
+        .optional input {
+            width: 100%;
+        }
+
+        .popup {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 20px;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .popup.active {
+            display: flex;
+        }
+    </style>
+</head>
+<body>
+    <div class="content">
+        <form id="form" action="/send" method="post" enctype="multipart/form-data">
+            <label for="source">From</label>
+            <input id="source" type="email" value="ser.vice.autobott@gmail.com" disabled>
+
+            <label for="destination">To</label>
+            <input id="destination" name="destination" type="email" required>
+
+            <button type="button" id="optionalButton" onclick="dropCC()"><i class="fa fa-angle-down" aria-hidden="true"></i></button>
+
+            <div class="optional" hidden>
+                <label for="cc">Cc</label>
+                <input id="cc" name="cc" type="email"><br>
+
+                <label for="bcc">Bcc</label>
+                <input id="bcc" name="bcc" type="email"><br>
+            </div>
+
+            <input id="subject" name="subject" placeholder="Subject" type="text" required><br>
+            <textarea id="body" name="content" placeholder="Compose Email" rows="8" required></textarea><br>
+
+            <div id="files">
+                <label>Attachments:</label>
+            </div>
+
+            <button type="button" onclick="addFileInput()"><i class="fa fa-plus"></i></button>
+
+            <button type="submit"><i class="fa fa-send-o"></i></button>
+        </form>
+    </div>
+
+    <div id="popup" class="popup">
+        <div>
+            <h2>Total file size exceeds 25MB!</h2>
+            <p>Please reduce the total file size and try again.</p>
+            <button onclick="closePopup()">Close</button>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('form');
+        const filesDiv = document.getElementById('files');
+        let totalSize = 0;
+
+        function addFileInput() {
+            const fileDiv = document.createElement('div');
+            fileDiv.className = 'file';
+
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.className = 'fileInput';
+            fileInput.name = 'file';
+            fileInput.multiple = true;  // Allow multiple files per input
+
+            const removeButton = document.createElement('button');
+            removeButton.className = 'closeButton';
+            removeButton.innerHTML = '<i class="fa fa-close"></i>';
+            removeButton.type = 'button';
+
+            fileDiv.appendChild(fileInput);
+            fileDiv.appendChild(removeButton);
+            filesDiv.appendChild(fileDiv);
+
+            removeButton.addEventListener('click', () => {
+                totalSize -= [...fileInput.files].reduce((sum, file) => sum + file.size, 0);
+                fileDiv.remove();
+            });
+
+            fileInput.addEventListener('change', () => {
+                fileInput.addEventListener('click', (e) => e.preventDefault());
+                totalSize += [...fileInput.files].reduce((sum, file) => sum + file.size, 0);
+            });
+        }
+
+        form.addEventListener('submit', (e) => {
+            if (totalSize > 25 * 1024 * 1024) {
+                e.preventDefault();
+                showPopup();
+            }
+        });
+
+        function dropCC() {
+            const button = document.getElementById('optionalButton');
+            const optional = document.getElementsByClassName('optional')[0];
+            optional.hidden = !optional.hidden;
+            button.innerHTML = optional.hidden ? 
+                '<i class="fa fa-angle-down" aria-hidden="true"></i>' : 
+                '<i class="fa fa-angle-up" aria-hidden="true"></i>';
+        }
+
+        function showPopup() {
+            document.getElementById('popup').classList.add('active');
+        }
+
+        function closePopup() {
+            document.getElementById('popup').classList.remove('active');
+        }
+    </script>
+</body>
+
+</html>
+
