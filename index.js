@@ -11,6 +11,11 @@ app.use(express.urlencoded({
     extended: true          //To allow nested object (person:{a,b,c}, age:9 ,...)
 }));
 
+// Ensuring the directory '/files' exist
+const dir = path.join(__dirname, 'files');
+if (!fs.existsSync(dir)){
+    fs.mkdirSync(dir);
+}
 
 // Mailer
 var transporter = nodemailer.createTransport({
@@ -36,10 +41,12 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
+// Home Page
 app.get('/', (req, res) =>{
     res.sendFile(path.join(__dirname, 'home.html'))
 })
 
+// Clearing Out the space
 app.get('/purge', (req, res)=>{
     const dirPath = path.join(__dirname, '/files')
     fs.readdirSync(dirPath).forEach(item => {
@@ -56,12 +63,7 @@ app.get('/purge', (req, res)=>{
     res.redirect('/')
 })
 
-/*
-app.get('/file', (req, res)={
-    fs.readdir(dirPath, (err, files) => {})
-})*/
-
-
+// The server part
 app.post('/send', upload.array('file'), async (req, res) => {
     try {
         const { destination, cc, bcc, subject, content } = req.body;
@@ -114,18 +116,7 @@ app.post('/send', upload.array('file'), async (req, res) => {
     }
 });
 
-
-app.listen(9000, () => {
-    console.log("Server on localhost:9000");
-});
-
-/*
-res.send(`
-    <h2>With <code>"express"</code> npm package</h2>
-    <form action="/api/upload" enctype="multipart/form-data" method="post">
-      <div>Text field title: <input type="text" name="title" /></div>
-      <div>File: <input type="file" name="someExpressFiles" multiple="multiple" /></div>
-      <input type="submit" value="Upload" />
-    </form>
-  `);
-  */
+const Port= process.env.PORT || 9000;
+app.listen(Port,() => {
+    console.log("Server is running on the Port: ",Port)
+})
